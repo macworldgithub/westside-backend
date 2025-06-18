@@ -33,7 +33,9 @@ export class AuthService {
       role: user.role,
     };
 
-    const accessToken = await this.jwtService.signAsync(payload);
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: 'anas',
+    });
 
     let credentials: LoginResponseDto = {
       //@ts-ignore
