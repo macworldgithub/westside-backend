@@ -8,12 +8,14 @@ import {
 import { CreateCarRegistrationDto } from './dto/req/create-car-registration.dto';
 import { CarRegistrationResponseDto } from './dto/res/car-registration-response.dto';
 import { UpdateCarRegistrationByChassisDto } from './dto/req/update-car-registration.dto';
+import { AwsService } from 'src/aws/aws.service';
 
 @Injectable()
 export class VehicleRegistrationService {
   constructor(
     @InjectModel(CarRegistration.name)
     private readonly carModel: Model<CarRegistrationDocument>,
+    
   ) {}
   private toResponseDto(
     doc: CarRegistrationDocument,
@@ -72,6 +74,12 @@ async searchAllFields(keyword: string): Promise<CarRegistrationResponseDto[]> {
 
   return results.map(this.toResponseDto);
 }
+
+async findByChassisNumber(chassisNumber: string) {
+  return this.carModel.findOne({ chassisNumber });
+}
+
+
 
 
 }
