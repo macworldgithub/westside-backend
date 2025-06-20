@@ -23,7 +23,6 @@ export class VehicleRegistrationService {
   constructor(
     @InjectModel(CarRegistration.name)
     private readonly carModel: Model<CarRegistrationDocument>,
-
     private readonly awsService: AwsService,
   ) {}
   private toResponseDto(
@@ -96,7 +95,7 @@ export class VehicleRegistrationService {
     }
   }
 
-  // Elastic-style search
+  
   async searchAllFields(
     keyword: string,
   ): Promise<CarRegistrationResponseDto[]> {

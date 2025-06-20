@@ -22,6 +22,8 @@ export class UserController {
       body.name,
       body.email,
       body.password,
+      body.address,
+      body.mobile
     );
 
     return {
@@ -30,6 +32,8 @@ export class UserController {
       name: user.name,
       email: user.email,
       role: user.role,
+      mobile: user.mobile,
+      address: user.address,
     };
   }
 
@@ -43,6 +47,8 @@ export class UserController {
       body.name,
       body.email,
       body.password,
+           body.address,
+      body.mobile
     );
 
     return {
@@ -51,6 +57,8 @@ export class UserController {
       name: user.name,
       email: user.email,
       role: user.role,
+      mobile: user.mobile,
+      address: user.address,
     };
   }
 
@@ -62,6 +70,8 @@ export class UserController {
       body.name,
       body.email,
       body.password,
+      body.address,
+      body.mobile
     );
 
     return {
@@ -69,6 +79,8 @@ export class UserController {
       _id: user._id.toString(), // Explicitly cast if needed
       name: user.name,
       email: user.email,
+       mobile:user.mobile,
+      address:user.address,
       role: user.role,
     };
   }

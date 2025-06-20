@@ -18,6 +18,12 @@ export class User {
 
   @Prop({ enum: Role, required: true })
   role: Role;
+
+  @Prop({required:true})
+  mobile:number
+
+  @Prop({required:true})
+  address:string
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

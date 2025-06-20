@@ -8,9 +8,10 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { VehicleRegistrationModule } from './vehicle-registration/vehicle-registration.module';
 import { AwsModule } from './aws/aws.module';
+import { WorkorderModule } from './workorder/workorder.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, UserModule, VehicleRegistrationModule, AwsModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, UserModule, VehicleRegistrationModule, AwsModule, WorkorderModule],
   controllers: [AppController],
   providers: [AppService],
 })

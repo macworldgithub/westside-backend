@@ -22,6 +22,8 @@ export class CarRegistration {
 
   @Prop()
   image: string; // Can be a URL or file path
+
+  
 }
 
 export const CarRegistrationSchema =

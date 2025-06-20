@@ -16,25 +16,73 @@ export class UserService {
     email: string,
     password: string,
     role: Role,
+    address: string,
+    mobile: string,
   ): Promise<User> {
     const existing = await this.userModel.findOne({ email });
     if (existing) throw new ConflictException('Email already exists');
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const createdUser = new this.userModel({ name, email, password: hashedPassword, role });
+    const createdUser = new this.userModel({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      address,
+      mobile,
+    });
     return createdUser.save();
   }
 
-  async createTechnician(name: string, email: string, password: string) {
-    return this.createUser(name, email, password, Role.Technician);
+  async createTechnician(
+    name: string,
+    email: string,
+    password: string,
+    address: string,
+    mobile: string,
+  ) {
+    return this.createUser(
+      name,
+      email,
+      password,
+      Role.Technician,
+      address,
+      mobile,
+    );
   }
 
-  async createShopManager(name: string, email: string, password: string) {
-    return this.createUser(name, email, password, Role.ShopManager);
+  async createShopManager(
+    name: string,
+    email: string,
+    password: string,
+    address: string,
+    mobile: string,
+  ) {
+    return this.createUser(
+      name,
+      email,
+      password,
+      Role.ShopManager,
+      address,
+      mobile,
+    );
   }
 
-  async createSystemAdmin(name: string, email: string, password: string) {
-    return this.createUser(name, email, password, Role.SystemAdministrator);
+  async createSystemAdmin(
+    name: string,
+    email: string,
+    password: string,
+    address: string,
+    mobile: string,
+  ) {
+    return this.createUser(
+      name,
+      email,
+      password,
+      Role.SystemAdministrator,
+      address,
+      mobile,
+    );
   }
 
   async findByEmail(email: string): Promise<User | null> {
