@@ -36,7 +36,7 @@ export class AwsService {
       })
       .promise();
 
-    return fileKey; 
+    return fileKey;
   }
 
   async uploadMultipleFiles(
@@ -62,11 +62,11 @@ export class AwsService {
     return true;
   }
 
-  async getSignedUrl(fileKey: string, expiresInSeconds = 300): Promise<string> {
+  async getSignedUrl(fileKey: string): Promise<string> {
     const params = {
       Bucket: this.bucket,
       Key: fileKey,
-      Expires: expiresInSeconds,
+      Expires: 60 * 60 * 24 * 7,
     };
 
     return this.s3.getSignedUrlPromise('getObject', params);
