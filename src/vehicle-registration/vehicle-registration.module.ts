@@ -6,12 +6,14 @@ import { CarRegistration, CarRegistrationSchema } from 'src/schemas/Car-Registra
 
 import { AwsModule } from 'src/aws/aws.module';
 import { AwsService } from 'src/aws/aws.service';
+import { WorkOrder, WorkOrderSchema } from 'src/schemas/Work-Order.Schema';
 
 @Module({
   providers: [VehicleRegistrationService ,AwsService],
   controllers: [VehicleRegistrationController],
   imports:[ MongooseModule.forFeature([
       { name: CarRegistration.name, schema: CarRegistrationSchema },
+       { name: WorkOrder.name, schema: WorkOrderSchema },
     ]) ,AwsModule]
 })
 export class VehicleRegistrationModule {}

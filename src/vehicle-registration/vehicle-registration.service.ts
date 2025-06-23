@@ -17,12 +17,16 @@ import { ReqCarImageDto } from './dto/req/upload-car-image-dto';
 import { ResCarImageDto } from './dto/res/uplaod-car-image-dto';
 import { ReqRegisteredCarDto } from './dto/req/get-registered-car-dto';
 import { ResRegisteredCarDto } from './dto/res/get-registered-car-dto';
+import { WorkOrder, WorkOrderDocument } from 'src/schemas/Work-Order.Schema';
+import { Role } from 'src/auth/roles.enum';
 
 @Injectable()
 export class VehicleRegistrationService {
   constructor(
     @InjectModel(CarRegistration.name)
     private readonly carModel: Model<CarRegistrationDocument>,
+    @InjectModel(WorkOrder.name)
+    private workOrderModel: Model<WorkOrderDocument>,
     private readonly awsService: AwsService,
   ) {}
   private toResponseDto(
@@ -66,59 +70,76 @@ export class VehicleRegistrationService {
     return this.toResponseDto(updated);
   }
 
-  async getRegisteredCar(
-    getRegisteredCar: ReqRegisteredCarDto,
-  ): Promise<ResRegisteredCarDto> {
-    const { chassisNumber } = getRegisteredCar;
+  async getRegisteredCarsForUser(
+    userId: string,
+    role: Role.Technician | Role.ShopManager | Role.SystemAdministrator,
+    page = 1,
+    limit = 20,
+    search?: string,
+  ): Promise<{ data: ResRegisteredCarDto[]; total: number }> {
+    const skip = (page - 1) * limit;
 
-    try {
-      const car = await this.carModel.findOne({ chassisNumber });
+    const searchQuery: any = {};
 
-      if (!car) {
-        throw new Error('Car not found with this chassis number');
-      }
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      searchQuery.$or = [
+        { plate: regex },
+        { variant: regex },
+        { model: regex },
+        { chassisNumber: regex },
+      ];
+    }
 
-      return {
+    // ✅ If not a mechanic, return ALL cars
+    if (role === Role.ShopManager || role === Role.SystemAdministrator) {
+      const [cars, total] = await Promise.all([
+        this.carModel.find(searchQuery).skip(skip).limit(limit),
+        this.carModel.countDocuments(searchQuery),
+      ]);
+
+      const data: ResRegisteredCarDto[] = await Promise.all(
+        cars.map(async (car) => ({
+          _id: car._id.toString(),
+          chassisNumber: car.chassisNumber,
+          plate: JSON.parse(car.plate),
+          variant: JSON.parse(car.variant),
+          model: JSON.parse(car.model),
+          year: car.year,
+          image: car.image ? await this.awsService.getSignedUrl(car.image) : '',
+        })),
+      );
+
+      return { data, total };
+    }
+
+    // 🔒 Mechanic: filter based on assigned cars only
+    const workOrders = await this.workOrderModel.find({ mechanics: userId });
+    const carIds = workOrders.map((wo) => wo.car);
+
+    const query = {
+      _id: { $in: carIds },
+      ...searchQuery,
+    };
+
+    const [cars, total] = await Promise.all([
+      this.carModel.find(query).skip(skip).limit(limit),
+      this.carModel.countDocuments(query),
+    ]);
+
+    const data: ResRegisteredCarDto[] = await Promise.all(
+      cars.map(async (car) => ({
         _id: car._id.toString(),
         chassisNumber: car.chassisNumber,
         plate: JSON.parse(car.plate),
         variant: JSON.parse(car.variant),
         model: JSON.parse(car.model),
         year: car.year,
-        image: await this.awsService.getSignedUrl(car.image),
-      };
-    } catch (error) {
-      console.error('Error fetching registered car:', error);
-      throw new Error(
-        error.message || 'Something went wrong while retrieving the car',
-      );
-    }
-  }
+        image: car.image ? await this.awsService.getSignedUrl(car.image) : '',
+      })),
+    );
 
-  
-  async searchAllFields(
-    keyword: string,
-  ): Promise<CarRegistrationResponseDto[]> {
-    const regex = new RegExp(keyword, 'i'); // Case-insensitive partial match
-
-    const results = await this.carModel.find({
-      $or: [
-        { plate: regex },
-        { variant: regex },
-        { model: regex },
-        { year: isNaN(Number(keyword)) ? undefined : Number(keyword) },
-        { chassisNumber: regex },
-      ].filter(Boolean),
-    });
-
-    // Replace image key with signed URL
-    for (const item of results) {
-      if (item.image) {
-        item.image = await this.awsService.getSignedUrl(item.image);
-      }
-    }
-
-    return results.map(this.toResponseDto);
+    return { data, total };
   }
 
   async findByChassisNumber(chassisNumber: string) {
