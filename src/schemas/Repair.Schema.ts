@@ -1,8 +1,10 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+export type RepairDocument = Repair & Document;
+
 @Schema({ timestamps: true })
-export class Repair extends Document {
+export class Repair {
   @Prop({ type: Types.ObjectId, ref: 'WorkOrder', required: true })
   workOrder: Types.ObjectId;
 
@@ -24,8 +26,11 @@ export class Repair extends Document {
   @Prop()
   beforeImageUri: string;
 
-   @Prop()
+  @Prop()
   afterImageUri: string;
+
+  @Prop({ default: false }) // 🔒 Prevents further updates when true
+  submitted: boolean;
 }
 
 export const RepairSchema = SchemaFactory.createForClass(Repair);

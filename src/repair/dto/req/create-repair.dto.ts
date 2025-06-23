@@ -1,46 +1,30 @@
+// create-repair.dto.ts
+import { IsMongoId, IsNotEmpty, IsString, IsDateString, IsNumber, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsString,
-  IsNotEmpty,
-  IsMongoId,
-  IsOptional,
-  IsNumber,
-} from 'class-validator';
 
 export class CreateRepairDto {
   @ApiProperty()
   @IsMongoId()
-  @IsNotEmpty()
   workOrder: string;
 
   @ApiProperty()
   @IsString()
-  @IsNotEmpty()
-  partName: string;
-
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
   mechanicName: string;
 
   @ApiProperty()
+  @IsString()
+  partName: string;
+
+  @ApiProperty()
   @IsNumber()
-  @IsNotEmpty()
   price: number;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
-  finishDate?: string;
+  @ApiProperty()
+  @IsDateString()
+  finishDate: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
+  @IsString()
   notes?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  beforeImageUri?: string;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  afterImageUri?: string; // ✅ NEW FIELD ADDED
 }
