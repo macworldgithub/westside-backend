@@ -51,6 +51,7 @@ export class VehicleRegistrationService {
     dto: CreateCarRegistrationDto,
   ): Promise<CarRegistrationResponseDto> {
     const created = new this.carModel(dto);
+    console.log(dto);
     const result = await created.save();
     return this.toResponseDto(result);
   }

@@ -67,7 +67,7 @@ export class VehicleRegistrationController {
 
     return this.service.create({
       ...body,
-      image: await this.awsService.getSignedUrl(imageUrl),
+      image: imageUrl,
     });
   }
 
@@ -140,7 +140,6 @@ export class VehicleRegistrationController {
     @Query('limit') limit = '20',
     @Query('search') search?: string,
   ) {
-
     return this.service.getRegisteredCarsForUser(
       userId,
       parseInt(page),
