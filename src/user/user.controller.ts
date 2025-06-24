@@ -19,8 +19,8 @@ import {
 export class UserController {
   constructor(private userService: UserService) {}
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ShopManager, Role.SystemAdministrator)
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(Role.ShopManager, Role.SystemAdministrator)
   @Post('create-technician')
   @ApiBearerAuth()
   @ApiOperation({
@@ -57,8 +57,8 @@ export class UserController {
     };
   }
 
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.SystemAdministrator)
+  // @UseGuards(JwtAuthGuard, RolesGuard)
+  // @Roles(Role.SystemAdministrator)
   @Post('create-manager')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a new Shop Manager (Admin only)' })

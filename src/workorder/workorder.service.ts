@@ -352,7 +352,12 @@ export class WorkorderService {
 
     if (user.role !== Role.SystemAdministrator) {
       andFilters.push({
-        $or: [{ shopManagers: user._id }, { mechanics: user._id }],
+        $or: [
+          //@ts-ignore
+          { shopManager: new Types.ObjectId(user._id) },
+          //@ts-ignore
+          { mechanics: new Types.ObjectId(user._id) },
+        ],
       });
     }
 
