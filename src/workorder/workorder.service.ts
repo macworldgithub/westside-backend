@@ -20,10 +20,7 @@ export class WorkorderService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
-  async createWorkOrder(
-  dto: CreateWorkOrderDto,
-  userRole: Role.Technician | Role.ShopManager | Role.SystemAdministrator,
-): Promise<WorkOrder> {
+ async createWorkOrder(dto: CreateWorkOrderDto): Promise<WorkOrder> {
   const {
     car,
     ownerName,
@@ -37,11 +34,18 @@ export class WorkorderService {
     createdBy,
   } = dto;
 
-  // ❌ Block unauthorized roles
-  if (userRole !== Role.ShopManager && userRole !== Role.SystemAdministrator) {
+  // 🔍 Step 1: Find user by createdBy
+  const user = await this.userModel.findById(createdBy);
+  if (!user) {
+    throw new NotFoundException('User (createdBy) not found');
+  }
+
+  // 🔒 Step 2: Allow only ShopManager or SystemAdmin
+  if (user.role !== Role.ShopManager && user.role !== Role.SystemAdministrator) {
     throw new ForbiddenException('Only shop managers or administrators can create work orders');
   }
 
+  // ✅ Step 3: Create work order
   const workOrder = new this.workOrderModel({
     car: new Types.ObjectId(car),
     ownerName,
@@ -54,11 +58,12 @@ export class WorkorderService {
     address,
     createdBy: new Types.ObjectId(createdBy),
     status: 'in_progress',
-    shopManager: userRole === Role.ShopManager ? [new Types.ObjectId(createdBy)] : [],
+    shopManagers: user.role === Role.ShopManager ? [user._id] : [],
   });
 
   return await workOrder.save();
 }
+
 
 
   async addMechanicToWorkOrder(

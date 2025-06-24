@@ -92,7 +92,6 @@ export class RepairService {
     return { data, total };
   }
 
-  // repair.service.ts
   async createRepair(
     dto: CreateRepairDto,
     beforeImage?: Express.Multer.File,
@@ -330,6 +329,4 @@ export class RepairService {
       repairs: Repairs,
     };
   }
-
-  
 }

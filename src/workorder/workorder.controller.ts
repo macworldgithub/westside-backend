@@ -31,20 +31,16 @@ import {
 export class WorkorderController {
   constructor(private readonly workOrderService: WorkorderService) {}
 
-  @Post('create-work-order')
-  @ApiOperation({ summary: 'Create a new work order' })
-  @ApiBody({ type: CreateWorkOrderDto })
-  @ApiResponse({
-    status: 201,
-    description: 'Work order created',
-    type: WorkOrder,
-  })
-  async createWorkOrder(
-    @Body() dto: CreateWorkOrderDto,
-    @Req() req: any,
-  ): Promise<WorkOrder> {
-    return this.workOrderService.createWorkOrder(dto, req.user.role);
-  }
+ @Post('create-work-order')
+@ApiOperation({ summary: 'Create a new work order' })
+@ApiBody({ type: CreateWorkOrderDto })
+@ApiResponse({ status: 201, description: 'Work order created', type: WorkOrder })
+async createWorkOrder(
+  @Body() dto: CreateWorkOrderDto,
+): Promise<WorkOrder> {
+  return this.workOrderService.createWorkOrder(dto);
+}
+
 
   @Put('add-mechanic/:workOrderId/:mechanicId')
   @ApiOperation({ summary: 'Add mechanic to a work order' })
