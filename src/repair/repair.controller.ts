@@ -26,7 +26,7 @@ import {
 } from '@nestjs/swagger';
 import { CreateRepairDto } from './dto/req/create-repair.dto';
 import { UpdateRepairDto } from './dto/req/update-repair.dto';
-import { RepairResponseDto } from 'd:/westside-backend/src/repair/dto/res/create-response.dto';
+import { RepairResponseDto } from './dto/res/create-response.dto';
 
 @Controller('repairs')
 export class RepairController {
@@ -91,7 +91,7 @@ export class RepairController {
     @Query('limit') limit = '20',
     @Query() filters: any,
   ): Promise<{
-    data: import('d:/westside-backend/src/repair/dto/res/create-response.dto').RepairResponseDto[];
+    data: RepairResponseDto[];
     total: number;
   }> {
     return this.repairService.getAllRepairs(
@@ -196,7 +196,6 @@ export class RepairController {
     status: 200,
     description:
       'Repair found and returned with signed URLs for images (if any)',
-    
   })
   @ApiResponse({ status: 404, description: 'Repair not found' })
   async getRepairById(@Param('id') id: string): Promise<any> {
