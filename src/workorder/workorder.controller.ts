@@ -230,4 +230,15 @@ async createWorkOrder(
       search,
     );
   }
+
+
+  @Get('get-single-workorder/:id')
+@ApiParam({ name: 'id', description: 'Work Order ID', example: '666e5fc9cf1234567890abcd' })
+@ApiQuery({ name: 'userId', description: 'User ID', example: '665e5fc9cf1234567890abcd' })
+async getWorkOrderById(
+  @Param('id') id: string,
+  @Query('userId') userId: string,
+) {
+  return this.workOrderService.getWorkOrderByIdWithPermission(id, userId);
+}
 }

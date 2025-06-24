@@ -371,4 +371,44 @@ export class WorkorderService {
 
     return { data, total };
   }
+
+  async getWorkOrderByIdWithPermission(
+    workOrderId: string,
+    userId: string,
+  ): Promise<WorkOrderDocument> {
+    // ✅ Validate both IDs
+    if (
+      !Types.ObjectId.isValid(workOrderId) ||
+      !Types.ObjectId.isValid(userId)
+    ) {
+      throw new BadRequestException('Invalid workOrderId or userId');
+    }
+
+    // ✅ Find the user and check role
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    // ✅ Find the work order
+    const workOrder = await this.workOrderModel.findById(workOrderId);
+    if (!workOrder) throw new NotFoundException('Work order not found');
+
+    // ✅ Allow full access for SystemAdministrator
+    if (user.role === Role.SystemAdministrator) {
+      return workOrder;
+    }
+
+    const userObjectId = new Types.ObjectId(userId);
+
+    const isAuthorized =
+      workOrder.shopManager?.some((id) => id.equals(userObjectId)) ||
+      workOrder.mechanics?.some((id) => id.equals(userObjectId));
+
+    if (!isAuthorized) {
+      throw new ForbiddenException(
+        'You are not authorized to view this work order',
+      );
+    }
+
+    return workOrder;
+  }
 }
