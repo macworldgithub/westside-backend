@@ -62,7 +62,13 @@ export class VehicleRegistrationService {
   ): Promise<CarRegistrationResponseDto> {
     const updated = await this.carModel.findOneAndUpdate(
       { chassisNumber },
-      dto,
+      {
+        plate: dto.plate,
+        variant: dto.variant,
+        model: dto.model,
+        year: dto.year,
+      },
+
       { new: true },
     );
 
@@ -208,9 +214,4 @@ export class VehicleRegistrationService {
       throw new BadRequestException('Failed to upload image');
     }
   }
-
-
-
- 
-
 }
