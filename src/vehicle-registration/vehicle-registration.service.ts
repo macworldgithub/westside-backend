@@ -19,6 +19,7 @@ import { ReqRegisteredCarDto } from './dto/req/get-registered-car-dto';
 import { ResRegisteredCarDto } from './dto/res/get-registered-car-dto';
 import { WorkOrder, WorkOrderDocument } from 'src/schemas/Work-Order.Schema';
 import { Role } from 'src/auth/roles.enum';
+import { User, UserDocument } from 'src/schemas/User.Schemas';
 
 @Injectable()
 export class VehicleRegistrationService {
@@ -28,6 +29,7 @@ export class VehicleRegistrationService {
     @InjectModel(WorkOrder.name)
     private workOrderModel: Model<WorkOrderDocument>,
     private readonly awsService: AwsService,
+    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
   private toResponseDto(
     doc: CarRegistrationDocument,
@@ -72,11 +74,15 @@ export class VehicleRegistrationService {
 
   async getRegisteredCarsForUser(
     userId: string,
-    role: Role.Technician | Role.ShopManager | Role.SystemAdministrator,
     page = 1,
     limit = 20,
     search?: string,
   ): Promise<{ data: ResRegisteredCarDto[]; total: number }> {
+    const user = await this.userModel.findById(userId);
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const role = user.role;
     const skip = (page - 1) * limit;
 
     const searchQuery: any = {};
@@ -91,7 +97,7 @@ export class VehicleRegistrationService {
       ];
     }
 
-    // ✅ If not a mechanic, return ALL cars
+    // ✅ Admin/Shop Manager: all cars
     if (role === Role.ShopManager || role === Role.SystemAdministrator) {
       const [cars, total] = await Promise.all([
         this.carModel.find(searchQuery).skip(skip).limit(limit),
@@ -113,7 +119,7 @@ export class VehicleRegistrationService {
       return { data, total };
     }
 
-    // 🔒 Mechanic: filter based on assigned cars only
+    // 🔒 Technician: only assigned cars
     const workOrders = await this.workOrderModel.find({ mechanics: userId });
     const carIds = workOrders.map((wo) => wo.car);
 

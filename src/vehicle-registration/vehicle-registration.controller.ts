@@ -33,7 +33,6 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 
-
 @ApiTags('Car Registration')
 @Controller('vehicle')
 export class VehicleRegistrationController {
@@ -42,7 +41,6 @@ export class VehicleRegistrationController {
     private readonly awsService: AwsService,
   ) {}
 
- 
   @Post('registration')
   @UseInterceptors(FileInterceptor('image'))
   @ApiConsumes('multipart/form-data')
@@ -73,10 +71,14 @@ export class VehicleRegistrationController {
     });
   }
 
-   @Put('update-by-chassis/:chassisNumber')
+  @Put('update-by-chassis/:chassisNumber')
   @ApiOperation({ summary: 'Update a registered car by chassis number' })
   @ApiParam({ name: 'chassisNumber', example: 'ABC1234567890' })
-  @ApiResponse({ status: 200, description: 'Updated successfully', type: CarRegistrationResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Updated successfully',
+    type: CarRegistrationResponseDto,
+  })
   async updateByChassis(
     @Param('chassisNumber') chassisNumber: string,
     @Body() dto: UpdateCarRegistrationByChassisDto,
@@ -84,7 +86,7 @@ export class VehicleRegistrationController {
     return this.service.updateByChassisNumber(chassisNumber, dto);
   }
 
-    @Delete('delete-image-car/:chassisNumber')
+  @Delete('delete-image-car/:chassisNumber')
   @ApiOperation({ summary: 'Delete car image by chassis number' })
   @ApiParam({ name: 'chassisNumber', example: 'ABC1234567890' })
   @ApiResponse({ status: 200, description: 'Image deleted successfully' })
@@ -102,7 +104,11 @@ export class VehicleRegistrationController {
     description: 'Car image and chassis number',
     type: ReqCarImageDto,
   })
-  @ApiResponse({ status: 200, description: 'Image uploaded successfully', type: ResCarImageDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Image uploaded successfully',
+    type: ResCarImageDto,
+  })
   async uploadCarImage(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: ReqCarImageDto,
@@ -118,24 +124,25 @@ export class VehicleRegistrationController {
     return this.service.uploadCarImage(body, file);
   }
 
-    @Get('cars-by-user/:userId/:role')
-  @ApiOperation({ summary: 'Get registered cars by user role (technician, shopManager, or systemAdministrator)' })
-  @ApiParam({ name: 'userId', example: '665d123abcde001234566789' })
-  @ApiParam({ name: 'role', enum: Role })
+  @Get('cars-by-user/:userId')
+  @ApiOperation({
+    summary:
+      'Get registered cars by user role (technician, shopManager, or systemAdministrator)',
+  })
+  @ApiParam({ name: 'userId', example: '68550514416bab0783af333b' })
   @ApiQuery({ name: 'page', required: false, example: 1 })
   @ApiQuery({ name: 'limit', required: false, example: 20 })
   @ApiQuery({ name: 'search', required: false, example: 'Toyota' })
   @ApiResponse({ status: 200, description: 'List of cars for the user' })
   async getCarsForUser(
     @Param('userId') userId: string,
-    @Param('role') role: Role,
     @Query('page') page = '1',
     @Query('limit') limit = '20',
     @Query('search') search?: string,
   ) {
+
     return this.service.getRegisteredCarsForUser(
       userId,
-      role,
       parseInt(page),
       parseInt(limit),
       search,
