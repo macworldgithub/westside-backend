@@ -108,9 +108,9 @@ export class VehicleRegistrationService {
         cars.map(async (car) => ({
           _id: car._id.toString(),
           chassisNumber: car.chassisNumber,
-          plate: JSON.parse(car.plate),
-          variant: JSON.parse(car.variant),
-          model: JSON.parse(car.model),
+          plate: car.plate,
+          variant: car.variant,
+          model: car.model,
           year: car.year,
           image: car.image ? await this.awsService.getSignedUrl(car.image) : '',
         })),
@@ -133,13 +133,15 @@ export class VehicleRegistrationService {
       this.carModel.countDocuments(query),
     ]);
 
+    console.log(cars, 'hehe');
+
     const data: ResRegisteredCarDto[] = await Promise.all(
       cars.map(async (car) => ({
         _id: car._id.toString(),
-        chassisNumber: car.chassisNumber,
-        plate: JSON.parse(car.plate),
-        variant: JSON.parse(car.variant),
-        model: JSON.parse(car.model),
+        chassisNumber: JSON.stringify(car.chassisNumber),
+        plate: car.plate,
+        variant: car.variant,
+        model: car.model,
         year: car.year,
         image: car.image ? await this.awsService.getSignedUrl(car.image) : '',
       })),
