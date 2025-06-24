@@ -321,13 +321,30 @@ export class RepairService {
       }
     }
 
-    const Repairs = await this.repairModel.find({
+    let repairs = await this.repairModel.find({
       workOrder: workOrder._id,
     });
 
+   const signedRepairs = await Promise.all(
+    repairs.map(async (repair) => {
+      const signed = repair.toObject();
+      //@ts-ignore
+      signed.beforeImageUri = repair.beforeImageUri
+        ? await this.awsService.getSignedUrl(repair.beforeImageUri)
+        : '';
+        //@ts-ignore
+      signed.afterImageUri = repair.afterImageUri
+        ? await this.awsService.getSignedUrl(repair.afterImageUri)
+        : '';
+      return signed;
+    }),
+  );
+
+   
+
     return {
       workOrder,
-      repairs: Repairs,
+      repairs: signedRepairs,
     };
   }
 }
