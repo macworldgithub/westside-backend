@@ -20,51 +20,54 @@ export class WorkorderService {
     @InjectModel(User.name) private userModel: Model<UserDocument>,
   ) {}
 
- async createWorkOrder(dto: CreateWorkOrderDto): Promise<WorkOrder> {
-  const {
-    car,
-    ownerName,
-    headMechanic,
-    orderCreatorName,
-    ownerEmail,
-    phoneNumber,
-    startDate,
-    finishDate,
-    address,
-    createdBy,
-  } = dto;
+  async createWorkOrder(dto: CreateWorkOrderDto): Promise<WorkOrder> {
+    const {
+      car,
+      ownerName,
+      headMechanic,
+      orderCreatorName,
+      ownerEmail,
+      phoneNumber,
+      startDate,
+      finishDate,
+      address,
+      createdBy,
+    } = dto;
 
-  // 🔍 Step 1: Find user by createdBy
-  const user = await this.userModel.findById(createdBy);
-  if (!user) {
-    throw new NotFoundException('User (createdBy) not found');
+    // 🔍 Step 1: Find user by createdBy
+    const user = await this.userModel.findById(createdBy);
+    if (!user) {
+      throw new NotFoundException('User (createdBy) not found');
+    }
+
+    // 🔒 Step 2: Allow only ShopManager or SystemAdmin
+    if (
+      user.role !== Role.ShopManager &&
+      user.role !== Role.SystemAdministrator
+    ) {
+      throw new ForbiddenException(
+        'Only shop managers or administrators can create work orders',
+      );
+    }
+
+    // ✅ Step 3: Create work order
+    const workOrder = new this.workOrderModel({
+      car: new Types.ObjectId(car),
+      ownerName,
+      headMechanic,
+      orderCreatorName,
+      ownerEmail,
+      phoneNumber,
+      startDate: new Date(startDate),
+      finishDate: new Date(finishDate),
+      address,
+      createdBy: new Types.ObjectId(createdBy),
+      status: 'in_progress',
+      shopManagers: user.role === Role.ShopManager ? [user._id] : [],
+    });
+
+    return await workOrder.save();
   }
-
-  // 🔒 Step 2: Allow only ShopManager or SystemAdmin
-  if (user.role !== Role.ShopManager && user.role !== Role.SystemAdministrator) {
-    throw new ForbiddenException('Only shop managers or administrators can create work orders');
-  }
-
-  // ✅ Step 3: Create work order
-  const workOrder = new this.workOrderModel({
-    car: new Types.ObjectId(car),
-    ownerName,
-    headMechanic,
-    orderCreatorName,
-    ownerEmail,
-    phoneNumber,
-    startDate: new Date(startDate),
-    finishDate: new Date(finishDate),
-    address,
-    createdBy: new Types.ObjectId(createdBy),
-    status: 'in_progress',
-    shopManagers: user.role === Role.ShopManager ? [user._id] : [],
-  });
-
-  return await workOrder.save();
-}
-
-
 
   async addMechanicToWorkOrder(
     workOrderId: string,
@@ -239,58 +242,57 @@ export class WorkorderService {
   }
 
   async getFilteredWorkOrdersByRoleWithinVehicle(
-  carId: string,
-  userId: string,
-  role: Role.Technician | Role.ShopManager,
-  page = 1,
-  limit = 20,
-  filters: {
-    status?: string;
-    startDate?: string;
-    endDate?: string;
-    search?: string;
-  },
-): Promise<{ data: WorkOrder[]; total: number }> {
-  const user = await this.userModel.findById(userId);
-  if (!user) throw new NotFoundException(`${role} not found`);
+    carId: string,
+    userId: string,
+    role: Role.Technician | Role.ShopManager,
+    page = 1,
+    limit = 20,
+    filters: {
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      search?: string;
+    },
+  ): Promise<{ data: WorkOrder[]; total: number }> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException(`${role} not found`);
 
-  const query: any = {
-    car: carId, // 🎯 Filter by specific vehicle
-  };
+    const query: any = {
+      car: carId, // 🎯 Filter by specific vehicle
+    };
 
-  if (role === Role.Technician) query.mechanics = userId;
-  if (role === Role.ShopManager) query.shopManager = userId;
+    if (role === Role.Technician) query.mechanics = userId;
+    if (role === Role.ShopManager) query.shopManager = userId;
 
-  if (filters.status) query.status = filters.status;
+    if (filters.status) query.status = filters.status;
 
-  if (filters.startDate || filters.endDate) {
-    query.startDate = {};
-    if (filters.startDate) query.startDate.$gte = new Date(filters.startDate);
-    if (filters.endDate) query.startDate.$lte = new Date(filters.endDate);
+    if (filters.startDate || filters.endDate) {
+      query.startDate = {};
+      if (filters.startDate) query.startDate.$gte = new Date(filters.startDate);
+      if (filters.endDate) query.startDate.$lte = new Date(filters.endDate);
+    }
+
+    if (filters.search) {
+      const regex = new RegExp(filters.search, 'i');
+      query.$or = [
+        { ownerName: regex },
+        { headMechanic: regex },
+        { orderCreatorName: regex },
+        { ownerEmail: regex },
+        { phoneNumber: regex },
+        { address: regex },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await Promise.all([
+      this.workOrderModel.find(query).skip(skip).limit(limit).populate('car'),
+      this.workOrderModel.countDocuments(query),
+    ]);
+
+    return { data, total };
   }
-
-  if (filters.search) {
-    const regex = new RegExp(filters.search, 'i');
-    query.$or = [
-      { ownerName: regex },
-      { headMechanic: regex },
-      { orderCreatorName: regex },
-      { ownerEmail: regex },
-      { phoneNumber: regex },
-      { address: regex },
-    ];
-  }
-
-  const skip = (page - 1) * limit;
-
-  const [data, total] = await Promise.all([
-    this.workOrderModel.find(query).skip(skip).limit(limit).populate('car'),
-    this.workOrderModel.countDocuments(query),
-  ]);
-
-  return { data, total };
-}
-
 
   async updateWorkOrder(
     id: string,
@@ -307,67 +309,61 @@ export class WorkorderService {
     return updated;
   }
 
-
   async searchWorkOrdersByCar(
-  carId: string,
-  userId: string,
-  page = 1,
-  limit = 20,
-  search?: string,
-): Promise<{
-  data: WorkOrderDocument[];
-  total: number;
-}> {
-  if (!mongoose.Types.ObjectId.isValid(carId)) {
-    throw new BadRequestException('Invalid car ID');
+    carId: string,
+    userId: string,
+    page = 1,
+    limit = 20,
+    search?: string,
+  ): Promise<{
+    data: WorkOrderDocument[];
+    total: number;
+  }> {
+    if (!mongoose.Types.ObjectId.isValid(carId)) {
+      throw new BadRequestException('Invalid car ID');
+    }
+
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    const skip = (page - 1) * limit;
+
+    // ✅ Base filters
+    const andFilters: any[] = [{ car: new Types.ObjectId(carId) }];
+
+    if (search?.trim()) {
+      const regex = new RegExp(search.trim(), 'i');
+
+      andFilters.push({
+        $or: [
+          { title: regex },
+          { description: regex },
+          { status: regex },
+          { ownerName: regex },
+          { ownerEmail: regex },
+          { orderCreatorName: regex },
+          { phoneNumber: regex },
+          { address: regex },
+        ],
+      });
+    }
+
+    // 🔒 Access control
+
+    if (user.role !== Role.SystemAdministrator) {
+      andFilters.push({
+        $or: [{ shopManagers: user._id }, { mechanics: user._id }],
+      });
+    }
+
+    const finalQuery = { $and: andFilters };
+
+    // ⏳ Run both query and count in parallel
+    const [data, total] = await Promise.all([
+      this.workOrderModel.find(finalQuery).skip(skip).limit(limit),
+      this.workOrderModel.countDocuments(finalQuery),
+    ]);
+
+    return { data, total };
   }
-
-  const user = await this.userModel.findById(userId);
-  if (!user) throw new NotFoundException('User not found');
-
-  const skip = (page - 1) * limit;
-
-  // ✅ Base filters
-  const andFilters: any[] = [{ car: carId }];
-
-  // 🔍 Elastic-style search
-  if (search) {
-    const regex = new RegExp(search, 'i');
-    andFilters.push({
-      $or: [
-        { title: regex },
-        { description: regex },
-        { status: regex },
-      ],
-    });
-  }
-
-  // 🔒 Access control
-  if (user.role !== Role.SystemAdministrator) {
-    andFilters.push({
-      $or: [
-        { shopManagers: user._id },
-        { mechanics: user._id },
-      ],
-    });
-  }
-
-  const finalQuery = { $and: andFilters };
-
-  // ⏳ Run both query and count in parallel
-  const [data, total] = await Promise.all([
-    this.workOrderModel.find(finalQuery).skip(skip).limit(limit),
-    this.workOrderModel.countDocuments(finalQuery),
-  ]);
-
-  return { data, total };
-}
-
-
-
- 
-
-
-
-  
 }
