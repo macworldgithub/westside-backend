@@ -184,4 +184,22 @@ export class RepairController {
   ) {
     return this.repairService.getRepairsByIdWithPermission(workOrderId, userId);
   }
+
+  @Get('get-single-repair-by-id/:id')
+  @ApiOperation({ summary: 'Get repair by ID with signed image URLs' })
+  @ApiParam({
+    name: 'id',
+    example: '665e99d4e5f1a6c123456789',
+    description: 'Repair MongoDB ObjectId',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Repair found and returned with signed URLs for images (if any)',
+    
+  })
+  @ApiResponse({ status: 404, description: 'Repair not found' })
+  async getRepairById(@Param('id') id: string): Promise<any> {
+    return this.repairService.getSingleRepairById(id);
+  }
 }

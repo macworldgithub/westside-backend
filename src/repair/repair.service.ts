@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import mongoose, { Model } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { AwsService } from 'src/aws/aws.service';
 import { Repair, RepairDocument } from 'src/schemas/Repair.Schema';
 import { CreateRepairDto } from './dto/req/create-repair.dto';
@@ -120,6 +120,7 @@ export class RepairService {
 
     const repair = new this.repairModel({
       ...dto,
+      workOrder: new Types.ObjectId(dto.workOrder), // 👈 convert here
       finishDate: new Date(dto.finishDate),
       beforeImageUri: beforeImageKey,
       afterImageUri: afterImageKey,
@@ -198,7 +199,7 @@ export class RepairService {
     };
   }
 
-  async getRepairById(id: string): Promise<RepairResponseDto> {
+  async getSingleRepairById(id: string): Promise<any> {
     const repair = await this.repairModel.findById(id);
     if (!repair) throw new NotFoundException('Repair not found');
 
@@ -208,7 +209,7 @@ export class RepairService {
       mechanicName: repair.mechanicName,
       partName: repair.partName,
       price: repair.price,
-      finishDate: repair.finishDate,
+      finishDate: repair.finishDate?.toISOString(),
       notes: repair.notes,
       submitted: repair.submitted,
       beforeImageUrl: repair.beforeImageUri
