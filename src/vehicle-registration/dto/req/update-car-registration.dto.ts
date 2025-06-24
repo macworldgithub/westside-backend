@@ -3,5 +3,4 @@ export class UpdateCarRegistrationByChassisDto {
   variant?: string;
   model?: string;
   year?: number;
-  image?: string;
 }
