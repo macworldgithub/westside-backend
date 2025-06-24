@@ -290,9 +290,13 @@ export class RepairService {
   async getRepairsByIdWithPermission(
     workOrderId: string,
     userId: string,
+    page = 1,
+    limit = 20,
+    search?: string,
   ): Promise<{
     workOrder: WorkOrderDocument;
-    repairs: RepairDocument[];
+    repairs: any[]; // or use a DTO
+    total: number;
   }> {
     if (!mongoose.Types.ObjectId.isValid(workOrderId)) {
       throw new BadRequestException('Invalid work order ID');
@@ -310,8 +314,7 @@ export class RepairService {
 
     if (user.role !== Role.SystemAdministrator) {
       const isAuthorized =
-        //@ts-ignore
-        workOrder.shopManagers?.some((id) => id.toString() === userId) ||
+        workOrder.shopManager?.some((id) => id.toString() === userId) ||
         workOrder.mechanics?.some((id) => id.toString() === userId);
 
       if (!isAuthorized) {
@@ -321,30 +324,41 @@ export class RepairService {
       }
     }
 
-    let repairs = await this.repairModel.find({
-      workOrder: workOrder._id,
-    });
+    const skip = (page - 1) * limit;
 
-   const signedRepairs = await Promise.all(
-    repairs.map(async (repair) => {
-      const signed = repair.toObject();
-      //@ts-ignore
-      signed.beforeImageUri = repair.beforeImageUri
-        ? await this.awsService.getSignedUrl(repair.beforeImageUri)
-        : '';
-        //@ts-ignore
-      signed.afterImageUri = repair.afterImageUri
-        ? await this.awsService.getSignedUrl(repair.afterImageUri)
-        : '';
-      return signed;
-    }),
-  );
+    const filters: any = { workOrder: workOrder._id };
 
-   
+    if (search) {
+      const regex = new RegExp(search, 'i');
+      filters.$or = [
+        { mechanicName: regex },
+        { partName: regex },
+        { notes: regex },
+      ];
+    }
+
+    const [repairs, total] = await Promise.all([
+      this.repairModel.find(filters).skip(skip).limit(limit),
+      this.repairModel.countDocuments(filters),
+    ]);
+
+    const signedRepairs = await Promise.all(
+      repairs.map(async (repair) => {
+        const signed = repair.toObject();
+        signed.beforeImageUri = repair.beforeImageUri
+          ? await this.awsService.getSignedUrl(repair.beforeImageUri)
+          : '';
+        signed.afterImageUri = repair.afterImageUri
+          ? await this.awsService.getSignedUrl(repair.afterImageUri)
+          : '';
+        return signed;
+      }),
+    );
 
     return {
       workOrder,
       repairs: signedRepairs,
+      total,
     };
   }
 }

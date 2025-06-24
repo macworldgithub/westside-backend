@@ -160,7 +160,8 @@ export class RepairController {
 
   @Get(':id/allowed')
   @ApiOperation({
-    summary: 'Get a work order and its repairs (with permission check)',
+    summary:
+      'Get a work order and its repairs (with permission, pagination, and search)',
   })
   @ApiParam({
     name: 'id',
@@ -172,6 +173,14 @@ export class RepairController {
     example: '665a99c08a01d6334c46c1a2',
     description: 'Requesting user ID',
   })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 20 })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    example: 'oil',
+    description: 'Search keyword (mechanicName, partName, or notes)',
+  })
   @ApiResponse({ status: 200, description: 'Work order with related repairs' })
   @ApiResponse({
     status: 403,
@@ -181,8 +190,17 @@ export class RepairController {
   async getWorkOrderRepairs(
     @Param('id') workOrderId: string,
     @Query('userId') userId: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+    @Query('search') search?: string,
   ) {
-    return this.repairService.getRepairsByIdWithPermission(workOrderId, userId);
+    return this.repairService.getRepairsByIdWithPermission(
+      workOrderId,
+      userId,
+      parseInt(page),
+      parseInt(limit),
+      search,
+    );
   }
 
   @Get('get-single-repair-by-id/:id')
