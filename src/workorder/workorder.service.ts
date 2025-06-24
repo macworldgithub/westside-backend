@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import mongoose, { Model, Types } from 'mongoose';
 import { WorkOrder, WorkOrderDocument } from 'src/schemas/Work-Order.Schema';
 import { CreateWorkOrderDto } from './dto/req/create-work-order-dto';
 import { User, UserDocument } from 'src/schemas/User.Schemas';
@@ -301,4 +301,68 @@ export class WorkorderService {
 
     return updated;
   }
+
+
+  async searchWorkOrdersByCar(
+  carId: string,
+  userId: string,
+  page = 1,
+  limit = 20,
+  search?: string,
+): Promise<{
+  data: WorkOrderDocument[];
+  total: number;
+}> {
+  if (!mongoose.Types.ObjectId.isValid(carId)) {
+    throw new BadRequestException('Invalid car ID');
+  }
+
+  const user = await this.userModel.findById(userId);
+  if (!user) throw new NotFoundException('User not found');
+
+  const skip = (page - 1) * limit;
+
+  // ✅ Base filters
+  const andFilters: any[] = [{ car: carId }];
+
+  // 🔍 Elastic-style search
+  if (search) {
+    const regex = new RegExp(search, 'i');
+    andFilters.push({
+      $or: [
+        { title: regex },
+        { description: regex },
+        { status: regex },
+      ],
+    });
+  }
+
+  // 🔒 Access control
+  if (user.role !== Role.SystemAdministrator) {
+    andFilters.push({
+      $or: [
+        { shopManagers: user._id },
+        { mechanics: user._id },
+      ],
+    });
+  }
+
+  const finalQuery = { $and: andFilters };
+
+  // ⏳ Run both query and count in parallel
+  const [data, total] = await Promise.all([
+    this.workOrderModel.find(finalQuery).skip(skip).limit(limit),
+    this.workOrderModel.countDocuments(finalQuery),
+  ]);
+
+  return { data, total };
+}
+
+
+
+ 
+
+
+
+  
 }

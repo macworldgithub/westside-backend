@@ -208,4 +208,9 @@ export class VehicleRegistrationService {
       throw new BadRequestException('Failed to upload image');
     }
   }
+
+
+
+ 
+
 }

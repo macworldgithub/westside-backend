@@ -204,4 +204,34 @@ export class WorkorderController {
   ): Promise<WorkOrder> {
     return this.workOrderService.updateWorkOrder(id, body);
   }
+
+  @Get('get-work-order-by-carId-with-permission/:carId/search')
+  @ApiOperation({
+    summary:
+      'Elastic search for work orders by car with pagination and role check',
+  })
+  @ApiParam({ name: 'carId', example: '665b999214c4b63a1fbe0abc' })
+  @ApiQuery({ name: 'userId', example: '665a99c08a01d6334c46c1a2' })
+  @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'page', required: false, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, example: 20 })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated and filtered work orders list',
+  })
+  async searchWorkOrdersForCar(
+    @Param('carId') carId: string,
+    @Query('userId') userId: string,
+    @Query('search') search?: string,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.workOrderService.searchWorkOrdersByCar(
+      carId,
+      userId,
+      parseInt(page),
+      parseInt(limit),
+      search,
+    );
+  }
 }

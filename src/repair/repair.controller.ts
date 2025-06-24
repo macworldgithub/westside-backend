@@ -157,4 +157,31 @@ export class RepairController {
   ) {
     return this.repairService.deleteRepairImage(repairId, userId, type);
   }
+
+  @Get(':id/allowed')
+  @ApiOperation({
+    summary: 'Get a work order and its repairs (with permission check)',
+  })
+  @ApiParam({
+    name: 'id',
+    example: '665b27f014c4b63a1fbe0033',
+    description: 'Work order ID',
+  })
+  @ApiQuery({
+    name: 'userId',
+    example: '665a99c08a01d6334c46c1a2',
+    description: 'Requesting user ID',
+  })
+  @ApiResponse({ status: 200, description: 'Work order with related repairs' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden if user is not authorized',
+  })
+  @ApiResponse({ status: 404, description: 'Work order or user not found' })
+  async getWorkOrderRepairs(
+    @Param('id') workOrderId: string,
+    @Query('userId') userId: string,
+  ) {
+    return this.repairService.getRepairsByIdWithPermission(workOrderId, userId);
+  }
 }
