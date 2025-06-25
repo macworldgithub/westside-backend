@@ -40,6 +40,7 @@ export class AuthService {
     let credentials: LoginResponseDto = {
       //@ts-ignore
       _id: user._id,
+      name:user.name,
       email: user.email,
       role: user.role,
       token: accessToken, // ✅ matches LoginCredentials
