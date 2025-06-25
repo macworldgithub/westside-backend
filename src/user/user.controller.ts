@@ -1,5 +1,12 @@
 // src/user/user.controller.ts
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Param,
+  Patch,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserRequestDto } from './dto/req/create-user-request.dto';
 import { CreateUserResponseDto } from './dto/res/create-user-response.dto';
@@ -12,7 +19,10 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiResponse,
+  ApiParam,
 } from '@nestjs/swagger';
+import { UpdateUserResponseDto } from './dto/res/update-user-response.dto';
+import { UpdateUserRequestDto } from './dto/req/update-user-request.dto';
 
 @ApiTags('Users')
 @Controller('user')
@@ -116,5 +126,32 @@ export class UserController {
       address: user.address,
       role: user.role,
     };
+  }
+
+  @Patch(':initiatorId/update/:userId')
+  @ApiOperation({ summary: 'Update user information (with initiator ID)' })
+  @ApiParam({
+    name: 'initiatorId',
+    required: true,
+    example: '665a99c08a01d6334c46c1a2',
+    description: 'ID of the user who initiated the update (e.g., admin)',
+  })
+  @ApiParam({
+    name: 'userId',
+    required: true,
+    example: '665c7a40e6c7a2db9d1b3a12',
+    description: 'ID of the user whose data will be updated',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated successfully',
+    type: UpdateUserResponseDto,
+  })
+  async updateUserByAdmin(
+    @Param('initiatorId') initiatorId: string,
+    @Param('userId') userId: string,
+    @Body() dto: UpdateUserRequestDto,
+  ): Promise<UpdateUserResponseDto> {
+    return this.userService.updateUser(userId, dto, initiatorId);
   }
 }
