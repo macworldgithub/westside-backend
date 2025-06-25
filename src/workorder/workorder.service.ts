@@ -63,7 +63,7 @@ export class WorkorderService {
       address,
       createdBy: new Types.ObjectId(createdBy),
       status: 'in_progress',
-      shopManagers: user.role === Role.ShopManager ? [user._id] : [],
+      shopManager: user.role === Role.ShopManager ? [user._id] : [],
     });
 
     return await workOrder.save();
