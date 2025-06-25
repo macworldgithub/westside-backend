@@ -97,55 +97,58 @@ export class UserService {
   }
 
   async updateUser(
-  userId: string,
-  dto: UpdateUserRequestDto,
-  initiatedById: string,
-): Promise<UpdateUserResponseDto> {
-  const user = await this.userModel.findById(userId);
-  if (!user) throw new NotFoundException('User not found');
+    userId: string,
+    dto: UpdateUserRequestDto,
+    initiatedById: string,
+  ): Promise<UpdateUserResponseDto> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('User not found');
 
-  const initiator = await this.userModel.findById(initiatedById);
-  if (!initiator) throw new NotFoundException('Initiating user not found');
+    const initiator = await this.userModel.findById(initiatedById);
+    if (!initiator) throw new NotFoundException('Initiating user not found');
 
-  const isSystemAdmin = initiator.role === Role.SystemAdministrator;
+    const isSystemAdmin = initiator.role === Role.SystemAdministrator;
 
-  // ❌ Don't allow _id overwrite
-  if ('_id' in dto) delete dto._id;
+    // ❌ Don't allow _id overwrite
+    if ('_id' in dto) delete dto._id;
 
-  if (!isSystemAdmin) {
-    // 🚫 Email change not allowed for non-admins
-    if ('email' in dto) delete dto.email;
+    if (!isSystemAdmin) {
+      // 🚫 Email change not allowed for non-admins
+      if ('email' in dto) delete dto.email;
+      if ('role' in dto) delete dto.role;
 
-    // 🔒 Verify current password
-    if (!dto.currentPassword) {
-      throw new ForbiddenException('Current password is required');
+      // 🔒 Verify current password
+      if (!dto.currentPassword) {
+        throw new ForbiddenException('Current password is required');
+      }
+
+      const isPasswordValid = await bcrypt.compare(
+        dto.currentPassword,
+        user.password,
+      );
+      if (!isPasswordValid) {
+        throw new ForbiddenException('Current password is incorrect');
+      }
     }
 
-    const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.password);
-    if (!isPasswordValid) {
-      throw new ForbiddenException('Current password is incorrect');
+    // 🔐 Hash new password if provided
+    if (dto.password) {
+      const salt = await bcrypt.genSalt(10);
+      dto.password = await bcrypt.hash(dto.password, salt);
     }
+
+    delete dto.currentPassword;
+
+    Object.assign(user, dto);
+    const updated = await user.save();
+
+    return {
+      _id: updated._id.toString(),
+      name: updated.name,
+      email: updated.email,
+      role: updated.role,
+      mobile: updated.mobile.toString(),
+      address: updated.address,
+    };
   }
-
-  // 🔐 Hash new password if provided
-  if (dto.password) {
-    const salt = await bcrypt.genSalt(10);
-    dto.password = await bcrypt.hash(dto.password, salt);
-  }
-
-  delete dto.currentPassword;
-
-  Object.assign(user, dto);
-  const updated = await user.save();
-
-  return {
-    _id: updated._id.toString(),
-    name: updated.name,
-    email: updated.email,
-    role: updated.role,
-    mobile: updated.mobile.toString(),
-    address: updated.address,
-  };
-}
- 
 }
