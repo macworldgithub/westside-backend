@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Work Order PDF Report</title>
+
+    <style>
+      * { box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; background: #fff; color: #000; margin: 0; padding: 20px; }
+      .a4-container { width: 794px; margin: 0 auto; padding: 20px; background: white;  break-after: auto;  }
+      .a4-container::after {
+        content: '';
+        display: block;
+        height: 20px; /* Extra spacing after content to avoid overlap */
+      }
+        /* Set page margins for all pages */
+      @page {
+        size: A4;
+        margin: 5mm 15mm; /* 20mm top/bottom, 15mm left/right */
+      }
+      
+      h1, h2 { text-align: center; margin-bottom: 10px; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid #333; table-layout: fixed; }
+      th, td { border: 1px solid #333; padding: 8px; text-align: left; word-wrap: break-word; }
+      th { background-color: #f2f2f2; }
+      img { max-width: 220px; height: 220px; display: block; object-fit: cover;  }
+     
+      .image-cell { width: 50%; }
+      .footer { text-align: center; margin-top: 30px; font-style: italic; font-size: 14px; color: #444; }
+    </style>
+  </head>
+  <body>
+    
+
+    <div class="a4-container" id="report">
+      <h1>🏢 Westside Auto Repairs</h1>
+      <h2>🛠️ Work Order Repair Report</h2>
+      <div style="text-align:center; font-size:14px;">
+  Generated on: <%= generatedDate %>
+</div>
+
+      <table>
+        <tr><th colspan="2">🔧 Work Order Info</th></tr>
+        <tr><td><strong>Work Order ID</strong></td><td><%= workOrder.id %></td></tr>
+        <tr><td><strong>Car Name</strong></td><td><%= workOrder.carName %></td></tr>
+        <tr><td><strong>Car Image</strong></td><td><img src="<%= workOrder.carImage %>" crossorigin="anonymous"/></td></tr>
+      </table>
+
+      <table>
+        <tr><th colspan="2">👤 Owner Information</th></tr>
+        <tr><td><strong>Name</strong></td><td><%= owner.name %></td></tr>
+        <tr><td><strong>Email</strong></td><td><%= owner.email %></td></tr>
+        <tr><td><strong>Phone</strong></td><td><%= owner.phone %></td></tr>
+      </table>
+
+      <table>
+        <tr><th>👨‍💼 Managers</th></tr>
+        <tr><td><%= managers.join(', ') %></td></tr>
+      </table>
+
+      <table>
+        <tr><th>🛠️ Mechanics</th></tr>
+        <tr><td><%= mechanics.join(', ') %></td></tr>
+      </table>
+
+      <table>
+        <tr><th colspan="6">🔩 Repair Details</th></tr>
+        <tr>
+          <th>#</th><th>Part</th><th>Mechanic</th><th>Price</th><th>Date</th><th>Notes</th>
+        </tr>
+        <% repairs.forEach((r, i) => { %>
+          <tr>
+            <td><%= i + 1 %></td>
+            <td><%= r.part %></td>
+            <td><%= r.mechanic %></td>
+            <td>$<%= r.price %></td>
+            <td><%= r.date %></td>
+            <td><%= r.notes %></td>
+          </tr>
+        <% }) %>
+      </table>
+
+      <table>
+        <tr><th colspan="2">🖼️ Repair Images</th></tr>
+        <% repairs.forEach(r => { %>
+          <tr>
+            <td class="image-cell">
+              <strong>Before - <%= r.part %></strong><br/>
+              <img src="<%= r.beforeImage %>" crossorigin="anonymous"/>
+            </td>
+            <td class="image-cell">
+              <strong>After - <%= r.part %></strong><br/>
+              <img src="<%= r.afterImage %>" crossorigin="anonymous"/>
+            </td>
+          </tr>
+        <% }) %>
+      </table>
+
+      <div class="footer">Thank you for choosing Westside Auto Repairs.</div>
+    </div>
+
+    
+  </body>
+</html>

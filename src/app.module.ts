@@ -10,9 +10,10 @@ import { VehicleRegistrationModule } from './vehicle-registration/vehicle-regist
 import { AwsModule } from './aws/aws.module';
 import { WorkorderModule } from './workorder/workorder.module';
 import { RepairModule } from './repair/repair.module';
+import { ReportModule } from './report/report.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, UserModule, VehicleRegistrationModule, AwsModule, WorkorderModule, RepairModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, UserModule, VehicleRegistrationModule, AwsModule, WorkorderModule, RepairModule, ReportModule],
   controllers: [AppController],
   providers: [AppService],
 })

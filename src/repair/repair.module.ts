@@ -17,7 +17,6 @@ import { WorkOrder, WorkOrderSchema } from 'src/schemas/Work-Order.Schema';
       { name: Repair.name, schema: RepairSchema },
       { name: User.name, schema: UserSchema },
       { name: WorkOrder.name, schema: WorkOrderSchema },
-    
     ]),
     AwsModule,
   ],
