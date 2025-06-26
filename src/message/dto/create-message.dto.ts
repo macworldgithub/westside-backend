@@ -16,24 +16,4 @@ export class CreateMessageDto {
   @IsOptional()
   @IsString()
   text?: string;
-
-  @IsOptional()
-  @IsArray()
-  imageUrls?: string[];
-
-  @IsOptional()
-  @IsArray()
-  videoUrls?: string[];
-
-  @IsOptional()
-  @IsArray()
-  fileUrls?: string[];
-
-  @IsOptional()
-  @IsArray()
-  fileNames?: string[];
-
-  @IsOptional()
-  @IsString()
-  audioUrl?: string;
 }

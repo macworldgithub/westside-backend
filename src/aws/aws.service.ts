@@ -72,6 +72,10 @@ export class AwsService {
     return this.s3.getSignedUrlPromise('getObject', params);
   }
 
+  async getSignedUrls(keys: string[]): Promise<string[]> {
+    return Promise.all(keys.map((key) => this.getSignedUrl(key)));
+  }
+
   async extractKeyFromSignedUrl(signedUrl: string): Promise<string | null> {
     try {
       const url = new URL(signedUrl);
