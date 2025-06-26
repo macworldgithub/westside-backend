@@ -31,16 +31,17 @@ import {
 export class WorkorderController {
   constructor(private readonly workOrderService: WorkorderService) {}
 
- @Post('create-work-order')
-@ApiOperation({ summary: 'Create a new work order' })
-@ApiBody({ type: CreateWorkOrderDto })
-@ApiResponse({ status: 201, description: 'Work order created', type: WorkOrder })
-async createWorkOrder(
-  @Body() dto: CreateWorkOrderDto,
-): Promise<WorkOrder> {
-  return this.workOrderService.createWorkOrder(dto);
-}
-
+  @Post('create-work-order')
+  @ApiOperation({ summary: 'Create a new work order' })
+  @ApiBody({ type: CreateWorkOrderDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Work order created',
+    type: WorkOrder,
+  })
+  async createWorkOrder(@Body() dto: CreateWorkOrderDto): Promise<WorkOrder> {
+    return this.workOrderService.createWorkOrder(dto);
+  }
 
   @Put('add-mechanic/:workOrderId/:mechanicId')
   @ApiOperation({ summary: 'Add mechanic to a work order' })
@@ -221,6 +222,7 @@ async createWorkOrder(
     @Query('search') search?: string,
     @Query('page') page = '1',
     @Query('limit') limit = '20',
+    @Query('startDate') startDate?: string, // format: YYYY-MM-DD
   ) {
     return this.workOrderService.searchWorkOrdersByCar(
       carId,
@@ -228,17 +230,25 @@ async createWorkOrder(
       parseInt(page),
       parseInt(limit),
       search,
+      startDate,
     );
   }
 
-
   @Get('get-single-workorder/:id')
-@ApiParam({ name: 'id', description: 'Work Order ID', example: '666e5fc9cf1234567890abcd' })
-@ApiQuery({ name: 'userId', description: 'User ID', example: '665e5fc9cf1234567890abcd' })
-async getWorkOrderById(
-  @Param('id') id: string,
-  @Query('userId') userId: string,
-) {
-  return this.workOrderService.getWorkOrderByIdWithPermission(id, userId);
-}
+  @ApiParam({
+    name: 'id',
+    description: 'Work Order ID',
+    example: '666e5fc9cf1234567890abcd',
+  })
+  @ApiQuery({
+    name: 'userId',
+    description: 'User ID',
+    example: '665e5fc9cf1234567890abcd',
+  })
+  async getWorkOrderById(
+    @Param('id') id: string,
+    @Query('userId') userId: string,
+  ) {
+    return this.workOrderService.getWorkOrderByIdWithPermission(id, userId);
+  }
 }

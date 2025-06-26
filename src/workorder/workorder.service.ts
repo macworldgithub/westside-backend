@@ -315,6 +315,8 @@ export class WorkorderService {
     page = 1,
     limit = 20,
     search?: string,
+    startDate?: string, // format: 'YYYY-MM-DD'
+ 
   ): Promise<{
     data: WorkOrderDocument[];
     total: number;
@@ -346,6 +348,13 @@ export class WorkorderService {
           { address: regex },
         ],
       });
+    }
+
+    if (startDate ) {
+      const createdAtFilter: any = {};
+      if (startDate) createdAtFilter.$gte = new Date(startDate);
+     
+      andFilters.push({ createdAt: createdAtFilter });
     }
 
     // 🔒 Access control

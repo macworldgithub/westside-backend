@@ -11,9 +11,11 @@ import { AwsModule } from './aws/aws.module';
 import { WorkorderModule } from './workorder/workorder.module';
 import { RepairModule } from './repair/repair.module';
 import { ReportModule } from './report/report.module';
+import { ChatModule } from './chat/chat.module';
+import { MessageModule } from './message/message.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, UserModule, VehicleRegistrationModule, AwsModule, WorkorderModule, RepairModule, ReportModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), DatabaseModule, AuthModule, UserModule, VehicleRegistrationModule, AwsModule, WorkorderModule, RepairModule, ReportModule, ChatModule, MessageModule],
   controllers: [AppController],
   providers: [AppService],
 })
