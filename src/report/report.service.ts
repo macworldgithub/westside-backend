@@ -30,10 +30,16 @@ export class ReportService {
   ) {}
 
   async getBase64Image(url: string): Promise<string> {
-    const response = await axios.get(url, { responseType: 'arraybuffer' });
-    const mimeType = response.headers['content-type'];
-    const base64 = Buffer.from(response.data).toString('base64');
-    return `data:${mimeType};base64,${base64}`;
+    try {
+      const response = await axios.get(url, { responseType: 'arraybuffer' });
+      const mimeType = response.headers['content-type'];
+      const base64 = Buffer.from(response.data).toString('base64');
+      return `data:${mimeType};base64,${base64}`;
+    } catch (error) {
+      console.warn(`⚠️ Failed to fetch image at ${url}: ${error.message}`);
+      // Return placeholder or empty base64
+      return ''; // OR: return base64 for a default image
+    }
   }
 
   async generatePdf(workOrderId: string): Promise<Buffer> {
@@ -68,13 +74,13 @@ export class ReportService {
         //@ts-ignore
         carName: `${workOrder.car?.model} ${workOrder.car?.variant} ${workOrder.car?.year}`,
         //@ts-ignore
-        carImage: workOrder.car?.image
-          ? //@ts-ignore
-            await this.getBase64Image(
-              //@ts-ignore
-              await this.awsService.getSignedUrl(workOrder.car?.image),
-            )
-          : '',
+        carImage: await this.getBase64Image(
+          //@ts-ignore
+          workOrder.car?.image
+            ? //@ts-ignore
+              await this.awsService.getSignedUrl(workOrder.car.image)
+            : '',
+        ),
       },
       owner: {
         name: workOrder.ownerName,
@@ -92,16 +98,16 @@ export class ReportService {
           price: r.price,
           date: r.finishDate?.toISOString().split('T')[0],
           notes: r.notes || '',
-          beforeImage: r.beforeImageUri
-            ? await this.getBase64Image(
-                await this.awsService.getSignedUrl(r.beforeImageUri),
-              )
-            : '',
-          afterImage: r.afterImageUri
-            ? await this.getBase64Image(
-                await this.awsService.getSignedUrl(r.afterImageUri),
-              )
-            : '',
+          beforeImage: await this.getBase64Image(
+            r.beforeImageUri
+              ? await this.awsService.getSignedUrl(r.beforeImageUri)
+              : '',
+          ),
+          afterImage: await this.getBase64Image(
+            r.afterImageUri
+              ? await this.awsService.getSignedUrl(r.afterImageUri)
+              : '',
+          ),
         })),
       ),
       generatedDate: new Date().toLocaleDateString(),
