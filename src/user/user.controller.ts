@@ -2,6 +2,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   UseGuards,
   Param,
@@ -14,6 +15,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
 import { Role } from 'src/auth/roles.enum';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { UserDocument } from 'src/schemas/User.Schemas';
 import {
   ApiTags,
   ApiOperation,
@@ -153,5 +155,26 @@ export class UserController {
     @Body() dto: UpdateUserRequestDto,
   ): Promise<UpdateUserResponseDto> {
     return this.userService.updateUser(userId, dto, initiatorId);
+  }
+
+  @Get('all')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all users',
+    type: [CreateUserResponseDto],
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only Admins allowed.' })
+  async getAllUsers(): Promise<CreateUserResponseDto[]> {
+    const users = await this.userService.getAllUsers();
+    return users.map((user: UserDocument) => ({
+      _id: user._id.toString(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      mobile: user.mobile,
+      address: user.address,
+    }));
   }
 }

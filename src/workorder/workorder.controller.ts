@@ -251,4 +251,16 @@ export class WorkorderController {
   ) {
     return this.workOrderService.getWorkOrderByIdWithPermission(id, userId);
   }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all work orders (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all work orders',
+  })
+  @ApiResponse({ status: 403, description: 'Forbidden. Only Admins allowed.' })
+  async getAllWorkOrders() {
+    return this.workOrderService.getAllWorkOrders();
+  }
+
 }

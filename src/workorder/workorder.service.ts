@@ -420,4 +420,13 @@ export class WorkorderService {
 
     return workOrder;
   }
+  
+
+  async getAllWorkOrders(): Promise<WorkOrder[]> {
+    return this.workOrderModel
+      .find()
+      .populate('mechanics', 'name email mobile')
+      .populate('shopManager', 'name email mobile')
+      .exec();
+  }
 }

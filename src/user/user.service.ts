@@ -151,4 +151,9 @@ export class UserService {
       address: updated.address,
     };
   }
+
+  async getAllUsers(): Promise<User[]> {
+    return this.userModel.find().exec();
+  }
+
 }
