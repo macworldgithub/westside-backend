@@ -7,6 +7,7 @@ import { join } from 'path';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  app.enableCors();
 
    app.setViewEngine('ejs');
   app.setBaseViewsDir(join(__dirname, '..', 'views'));

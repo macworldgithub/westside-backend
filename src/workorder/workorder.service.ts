@@ -427,6 +427,7 @@ export class WorkorderService {
       .find()
       .populate('mechanics', 'name email mobile')
       .populate('shopManager', 'name email mobile')
+      .populate('car')
       .exec();
   }
 }
