@@ -7,6 +7,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Get,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
 
@@ -59,5 +60,18 @@ export class ChatController {
     @Query('initiatorId') initiatorId: string,
   ): Promise<ChatRoomDocument> {
     return this.chatService.createWorkOrderChat(workOrderId, initiatorId);
+  }
+
+  @Get('chat-rooms/:userId')
+  getUserChatRooms(@Param('userId') userId: string) {
+    return this.chatService.getUserChatRooms(userId);
+  }
+
+  @Get(':chatRoomId/messages')
+  async getMessagesByWeek(
+    @Param('chatRoomId') chatRoomId: string,
+    @Query('week') week = '0', // 0 = current week
+  ) {
+    return this.chatService.getMessagesByChatRoom(chatRoomId, parseInt(week));
   }
 }

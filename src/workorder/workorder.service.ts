@@ -11,6 +11,7 @@ import { CreateWorkOrderDto } from './dto/req/create-work-order-dto';
 import { User, UserDocument } from 'src/schemas/User.Schemas';
 import { UpdateWorkOrderDto } from './dto/req/update-work-order-dto';
 import { Role } from 'src/auth/roles.enum';
+import { ChatRoom, ChatRoomDocument } from 'src/schemas/ChatRoom.Schema';
 
 @Injectable()
 export class WorkorderService {
@@ -18,6 +19,9 @@ export class WorkorderService {
     @InjectModel(WorkOrder.name)
     private workOrderModel: Model<WorkOrderDocument>,
     @InjectModel(User.name) private userModel: Model<UserDocument>,
+
+    @InjectModel(ChatRoom.name)
+    private chatRoomModel: Model<ChatRoomDocument>,
   ) {}
 
   async createWorkOrder(dto: CreateWorkOrderDto): Promise<WorkOrder> {
@@ -69,6 +73,128 @@ export class WorkorderService {
     return await workOrder.save();
   }
 
+  async removeMechanicFromChatRoom(
+    workOrderId: string,
+    mechanicId: string,
+  ): Promise<string> {
+    const mechanic = await this.userModel.findById(mechanicId);
+    if (!mechanic || mechanic.role !== Role.Technician) {
+      throw new ForbiddenException('User is not a mechanic');
+    }
+
+    const chatRoom = await this.chatRoomModel.findOne({
+      workOrderId: new Types.ObjectId(workOrderId),
+    });
+
+    if (!chatRoom) throw new NotFoundException('Chat room not found');
+
+    const wasParticipant = chatRoom.participants.some((id) =>
+      //@ts-ignore
+      id.equals(mechanic._id),
+    );
+    if (!wasParticipant) {
+      throw new NotFoundException('Mechanic is not a participant in this chat');
+    }
+
+    chatRoom.participants = chatRoom.participants.filter(
+      //@ts-ignore
+      (id) => !id.equals(mechanic._id),
+    );
+
+    await chatRoom.save();
+    return 'Mechanic removed from chat room successfully';
+  }
+
+  async removeManagerFromChatRoom(
+    workOrderId: string,
+    managerId: string,
+  ): Promise<string> {
+    const manager = await this.userModel.findById(managerId);
+    if (!manager || manager.role !== Role.ShopManager) {
+      throw new ForbiddenException('User is not a shop manager');
+    }
+
+    const chatRoom = await this.chatRoomModel.findOne({
+      workOrderId: new Types.ObjectId(workOrderId),
+    });
+
+    if (!chatRoom) throw new NotFoundException('Chat room not found');
+
+    const wasParticipant = chatRoom.participants.some((id) =>
+      //@ts-ignore
+      id.equals(manager._id),
+    );
+    if (!wasParticipant) {
+      throw new NotFoundException('Manager is not a participant in this chat');
+    }
+
+    chatRoom.participants = chatRoom.participants.filter(
+      //@ts-ignore
+      (id) => !id.equals(manager._id),
+    );
+
+    await chatRoom.save();
+    return 'Shop manager removed from chat room successfully';
+  }
+
+  async addMechanicToChatRoom(
+    workOrderId: string,
+    mechanicId: string,
+  ): Promise<ChatRoomDocument> {
+    const workOrderObjectId = new Types.ObjectId(workOrderId);
+    const mechanicObjectId = new Types.ObjectId(mechanicId);
+
+    const user = await this.userModel.findById(mechanicObjectId);
+    if (!user) throw new NotFoundException('Mechanic not found');
+    if (user.role !== Role.Technician) {
+      throw new BadRequestException('User is not a mechanic');
+    }
+
+    const chatRoom = await this.chatRoomModel.findOne({
+      workOrderId: workOrderObjectId,
+    });
+    if (!chatRoom) throw new NotFoundException('Chat room not found');
+
+    const isAlreadyParticipant = chatRoom.participants.some((id) =>
+      id.equals(mechanicObjectId),
+    );
+    if (isAlreadyParticipant) {
+      throw new BadRequestException('Mechanic already in chat room');
+    }
+
+    chatRoom.participants.push(mechanicObjectId);
+    return await chatRoom.save();
+  }
+
+  async addManagerToChatRoom(
+    workOrderId: string,
+    managerId: string,
+  ): Promise<ChatRoomDocument> {
+    const workOrderObjectId = new Types.ObjectId(workOrderId);
+    const managerObjectId = new Types.ObjectId(managerId);
+
+    const user = await this.userModel.findById(managerObjectId);
+    if (!user) throw new NotFoundException('Manager not found');
+    if (user.role !== Role.ShopManager) {
+      throw new BadRequestException('User is not a shop manager');
+    }
+
+    const chatRoom = await this.chatRoomModel.findOne({
+      workOrderId: workOrderObjectId,
+    });
+    if (!chatRoom) throw new NotFoundException('Chat room not found');
+
+    const isAlreadyParticipant = chatRoom.participants.some((id) =>
+      id.equals(managerObjectId),
+    );
+    if (isAlreadyParticipant) {
+      throw new BadRequestException('Manager already in chat room');
+    }
+
+    chatRoom.participants.push(managerObjectId);
+    return await chatRoom.save();
+  }
+
   async addMechanicToWorkOrder(
     workOrderId: string,
     mechanicId: string,
@@ -89,7 +215,10 @@ export class WorkorderService {
     //@ts-ignore
     workOrder.mechanics.push(mechanic._id);
     await workOrder.save();
-    return 'Mechanic added successfully';
+
+    await this.addMechanicToChatRoom(workOrderId, mechanicId);
+
+    return 'Mechanic added successfully with Entry in Chat Room';
   }
 
   async addManagerToWorkOrder(
@@ -112,7 +241,95 @@ export class WorkorderService {
     //@ts-ignore
     workOrder.shopManager.push(manager._id);
     await workOrder.save();
-    return 'Manager added successfully';
+
+    await this.addManagerToChatRoom(workOrderId, managerId);
+
+    return 'Manager added successfully With entry in Chat Room';
+  }
+
+  async deleteMechanicFromWorkOrder(
+    workOrderId: string,
+    mechanicId: string,
+  ): Promise<string> {
+    const workOrder = await this.workOrderModel.findById(workOrderId);
+    if (!workOrder) throw new NotFoundException('Work Order not found');
+
+    const mechanic = await this.userModel.findById(mechanicId);
+    if (!mechanic) throw new NotFoundException('Mechanic not found');
+
+    // Check if mechanic is assigned
+    const isAssigned = workOrder.mechanics.some((id) =>
+      //@ts-ignore
+      id.equals(mechanic._id),
+    );
+    if (!isAssigned)
+      throw new BadRequestException('Mechanic not assigned to this work order');
+
+    // Archive if not already
+    const alreadyArchived = workOrder.mechanicHistory.some(
+      (snap) => snap.email === mechanic.email,
+    );
+    if (!alreadyArchived) {
+      workOrder.mechanicHistory.push({
+        name: mechanic.name,
+        email: mechanic.email,
+        phone: mechanic.mobile?.toString(),
+        deletedAt: new Date(),
+      });
+    }
+
+    // Remove from list
+    workOrder.mechanics = workOrder.mechanics.filter(
+      //@ts-ignore
+      (id) => !id.equals(mechanic._id),
+    );
+
+    await workOrder.save();
+
+    await this.removeMechanicFromChatRoom(workOrderId, mechanicId);
+
+    return 'Mechanic removed from Work Order and Chat Room and archived from work order successfully';
+  }
+
+  async deleteManagerFromWorkOrder(
+    workOrderId: string,
+    managerId: string,
+  ): Promise<string> {
+    const workOrder = await this.workOrderModel.findById(workOrderId);
+    if (!workOrder) throw new NotFoundException('Work Order not found');
+
+    const manager = await this.userModel.findById(managerId);
+    if (!manager) throw new NotFoundException('Manager not found');
+
+    const isAssigned = workOrder.shopManager.some((id) =>
+      //@ts-ignore
+      id.equals(manager._id),
+    );
+    if (!isAssigned)
+      throw new BadRequestException('Manager not assigned to this work order');
+
+    const alreadyArchived = workOrder.managerHistory.some(
+      (snap) => snap.email === manager.email,
+    );
+    if (!alreadyArchived) {
+      workOrder.managerHistory.push({
+        name: manager.name,
+        email: manager.email,
+        phone: manager.mobile?.toString(),
+        deletedAt: new Date(),
+      });
+    }
+
+    workOrder.shopManager = workOrder.shopManager.filter(
+      //@ts-ignore
+      (id) => !id.equals(manager._id),
+    );
+
+    await workOrder.save();
+
+    await this.removeManagerFromChatRoom(workOrderId, managerId);
+
+    return 'Manager removed from Work Order and Chat Room and archived from work order successfully';
   }
 
   async deleteMechanicFromWorkOrders(mechanicId: string): Promise<string> {
@@ -316,7 +533,6 @@ export class WorkorderService {
     limit = 20,
     search?: string,
     startDate?: string, // format: 'YYYY-MM-DD'
- 
   ): Promise<{
     data: WorkOrderDocument[];
     total: number;
@@ -350,10 +566,10 @@ export class WorkorderService {
       });
     }
 
-    if (startDate ) {
+    if (startDate) {
       const createdAtFilter: any = {};
       if (startDate) createdAtFilter.$gte = new Date(startDate);
-     
+
       andFilters.push({ createdAt: createdAtFilter });
     }
 
@@ -420,7 +636,6 @@ export class WorkorderService {
 
     return workOrder;
   }
-  
 
   async getAllWorkOrders(): Promise<WorkOrder[]> {
     return this.workOrderModel

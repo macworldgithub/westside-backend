@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -43,6 +45,78 @@ export class WorkorderController {
     return this.workOrderService.createWorkOrder(dto);
   }
 
+  @Post(':workOrderId/add-mechanic-to-chatroom/:mechanicId')
+  @ApiOperation({ summary: 'Add a mechanic to the chat room' })
+  @ApiParam({ name: 'workOrderId', description: 'ID of the Work Order' })
+  @ApiParam({ name: 'mechanicId', description: 'User ID of the mechanic' })
+  async addMechanicToChatRoom(
+    @Param('workOrderId') workOrderId: string,
+    @Param('mechanicId') mechanicId: string,
+  ) {
+    return this.workOrderService.addMechanicToChatRoom(workOrderId, mechanicId);
+  }
+
+  @Post(':workOrderId/add-manager-to-chatroom/:managerId')
+  @ApiOperation({ summary: 'Add a manager to the chat room' })
+  @ApiParam({ name: 'workOrderId', description: 'ID of the Work Order' })
+  @ApiParam({ name: 'managerId', description: 'User ID of the manager' })
+  async addManagerToChatRoom(
+    @Param('workOrderId') workOrderId: string,
+    @Param('managerId') managerId: string,
+  ) {
+    return this.workOrderService.addManagerToChatRoom(workOrderId, managerId);
+  }
+
+  @Delete(':workOrderId/delete-mechanic-from-workorder/:mechanicId')
+  @ApiOperation({ summary: 'Remove a mechanic from a specific work order' })
+  @ApiParam({
+    name: 'workOrderId',
+    required: true,
+    description: 'Work Order ID',
+  })
+  @ApiParam({
+    name: 'mechanicId',
+    required: true,
+    description: 'Mechanic User ID',
+  })
+  @ApiResponse({ status: 200, description: 'Mechanic removed successfully' })
+  @ApiResponse({ status: 404, description: 'Mechanic or Work Order not found' })
+  async removeMechanicFromWorkOrder(
+    @Param('workOrderId') workOrderId: string,
+    @Param('mechanicId') mechanicId: string,
+  ): Promise<{ message: string }> {
+    const result = await this.workOrderService.deleteMechanicFromWorkOrder(
+      workOrderId,
+      mechanicId,
+    );
+    return { message: result };
+  }
+
+  @Delete(':workOrderId/delete-manager-from-workorder/:managerId')
+  @ApiOperation({ summary: 'Remove a shop manager from a specific work order' })
+  @ApiParam({
+    name: 'workOrderId',
+    required: true,
+    description: 'Work Order ID',
+  })
+  @ApiParam({
+    name: 'managerId',
+    required: true,
+    description: 'Manager User ID',
+  })
+  @ApiResponse({ status: 200, description: 'Manager removed successfully' })
+  @ApiResponse({ status: 404, description: 'Manager or Work Order not found' })
+  async removeManagerFromWorkOrder(
+    @Param('workOrderId') workOrderId: string,
+    @Param('managerId') managerId: string,
+  ): Promise<{ message: string }> {
+    const result = await this.workOrderService.deleteManagerFromWorkOrder(
+      workOrderId,
+      managerId,
+    );
+    return { message: result };
+  }
+
   @Put('add-mechanic/:workOrderId/:mechanicId')
   @ApiOperation({ summary: 'Add mechanic to a work order' })
   @ApiParam({ name: 'workOrderId', example: '665d123abcde001234567890' })
@@ -66,6 +140,47 @@ export class WorkorderController {
     @Param('managerId') managerId: string,
   ) {
     return this.workOrderService.addManagerToWorkOrder(workOrderId, managerId);
+  }
+
+  @Delete(':workOrderId/remove-mechanic-for-chat-room/:mechanicId')
+  @ApiOperation({ summary: 'Remove a mechanic from a chat room' })
+  @ApiParam({ name: 'workOrderId', type: String, description: 'Work Order ID' })
+  @ApiParam({
+    name: 'mechanicId',
+    type: String,
+    description: 'Mechanic User ID',
+  })
+  @ApiResponse({ status: 200, description: 'Mechanic removed successfully' })
+  @ApiResponse({ status: 404, description: 'Mechanic or chat room not found' })
+  @HttpCode(HttpStatus.OK)
+  async removeMechanicFromChatRoom(
+    @Param('workOrderId') workOrderId: string,
+    @Param('mechanicId') mechanicId: string,
+  ): Promise<string> {
+    return this.workOrderService.removeMechanicFromChatRoom(
+      workOrderId,
+      mechanicId,
+    );
+  }
+
+  @Delete(':workOrderId/remove-manager-from-chat-room/:managerId')
+  @ApiOperation({ summary: 'Remove a shop manager from a chat room' })
+  @ApiParam({ name: 'workOrderId', type: String, description: 'Work Order ID' })
+  @ApiParam({ name: 'managerId', type: String, description: 'Manager User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Shop manager removed successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Manager or chat room not found' })
+  @HttpCode(HttpStatus.OK)
+  async removeManagerFromChatRoom(
+    @Param('workOrderId') workOrderId: string,
+    @Param('managerId') managerId: string,
+  ): Promise<string> {
+    return this.workOrderService.removeManagerFromChatRoom(
+      workOrderId,
+      managerId,
+    );
   }
 
   @Delete('delete-mechanic/:id')
@@ -262,5 +377,4 @@ export class WorkorderController {
   async getAllWorkOrders() {
     return this.workOrderService.getAllWorkOrders();
   }
-
 }

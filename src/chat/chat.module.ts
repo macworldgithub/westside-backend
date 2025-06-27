@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { WorkOrder, WorkOrderSchema } from 'src/schemas/Work-Order.Schema';
 import { User, UserSchema } from 'src/schemas/User.Schemas';
 import { ChatRoom, ChatRoomSchema } from 'src/schemas/ChatRoom.Schema';
+import { Message, MessageSchema } from 'src/schemas/Message.Schema';
 
 @Module({
   providers: [ChatService],
@@ -14,6 +15,7 @@ import { ChatRoom, ChatRoomSchema } from 'src/schemas/ChatRoom.Schema';
       { name: WorkOrder.name, schema: WorkOrderSchema },
       { name: User.name, schema: UserSchema },
       { name: ChatRoom.name, schema: ChatRoomSchema },
+         { name: Message.name, schema: MessageSchema },
     ]),
   ],
 })

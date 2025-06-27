@@ -114,8 +114,8 @@ export class MessageService {
 
     // 🧾 Save message to DB
     const newMessage = await new this.messageModel({
-      chatRoomId,
-      sender,
+      chatRoomId: new Types.ObjectId(chatRoomId),
+      sender: new Types.ObjectId(sender),
       text,
       imageUrls: imageKeys,
       videoUrls: videoKeys,
