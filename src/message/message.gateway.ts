@@ -45,7 +45,7 @@ export class MessageGateway {
     @MessageBody() chatRoomId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    console.log('idhar aaya');
+  
     client.join(chatRoomId);
   }
 

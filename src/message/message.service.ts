@@ -45,13 +45,10 @@ export class MessageService {
   ): Promise<MessageWithSignedUrls> {
     const { chatRoomId, sender, text } = payload;
 
-    console.log(payload);
-
     const objectId = new Types.ObjectId(chatRoomId);
 
     const chatRoom = await this.chatRoomModel.findById(objectId);
 
-    console.log(chatRoom, '');
     if (!chatRoom) throw new NotFoundException('ChatRoom not found');
 
     const isParticipant = chatRoom.participants.some(
